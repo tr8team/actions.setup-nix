@@ -40,6 +40,9 @@ inputs:
   attic-token:
     default: ''
     description: 'Token for attic'
+  installer-binary:
+    default: ''
+    description: 'Path to a pre-provisioned nix-installer binary on the runner (passed to nix-installer-action source-binary). Avoids downloading the installer from install.determinate.systems each job - needed on self-hosted runners whose egress is throttled by that CDN.'
 
 branding:
   color: blue
@@ -297,10 +300,17 @@ runs:
     # own APFS volume and mounts it over /nix, shadowing the image (observed). The
     # bootstrap below replaces it, which also removes its ~60s from the warm path.
     - name: Install Nix (Determinate Systems)
-      if: steps.niximg.outputs.attached != 'true'
+      if: steps.niximg.outputs.attached != 'true' && inputs.installer-binary == ''
       uses: DeterminateSystems/nix-installer-action@main
       with:
         extra-conf: ${{ steps.nixconf.outputs.config }}
+
+    - name: Install Nix (Determinate Systems, pre-provisioned binary)
+      if: steps.niximg.outputs.attached != 'true' && inputs.installer-binary != ''
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ steps.nixconf.outputs.config }}
+        source-binary: ${{ inputs.installer-binary }}
 
     - name: Bootstrap Nix from store image (macOS)
       shell: bash
