@@ -311,6 +311,11 @@ runs:
       with:
         extra-conf: ${{ steps.nixconf.outputs.config }}
         source-binary: ${{ inputs.installer-binary }}
+        # self-hosted runners with throttled egress to install.determinate.systems:
+        # the post-run diagnostics phone-home HANGS the job for 35+ min. Disable.
+        diagnostic-endpoint: ""
+        # the post-run also self-tests FlakeHub reachability unless told not to
+        determinate: false
 
     - name: Bootstrap Nix from store image (macOS)
       shell: bash
